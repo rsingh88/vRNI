@@ -43,7 +43,7 @@ def login(key):
 	Uri = "/data-sources/cisco-switches"
 	headers = {
 	"Content-Type":"application/json",
-	"NetworkInsight_AuthKey":AuthKey
+	"Authorization":AuthKey
 	}
 	CiscoResp = requests.get((BaseUrl+Uri),headers = headers, verify=False)
 	print CiscoResp.text
