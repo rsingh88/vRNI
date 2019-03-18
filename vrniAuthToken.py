@@ -59,4 +59,3 @@ AuthKey = GenrateToken()
 # 2.) login(AuthKey) is in test phase and is listing the cisco switchs
 login(AuthKey)
 
-
