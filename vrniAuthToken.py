@@ -37,7 +37,9 @@ def GenrateToken():
 
 
 
-def login(key):
+
+
+def addDataSource(key,ip,name,sw_type):
 	AuthKey = key
 	BaseUrl = "https://vwcp9vcsvrni01.info.corp/api/ni"
 	Uri = "/data-sources/cisco-switches"
@@ -45,8 +47,36 @@ def login(key):
 	"Content-Type":"application/json",
 	"Authorization": "NetworkInsight "+AuthKey
 	}
-	CiscoResp = requests.get((BaseUrl+Uri),headers = headers, verify=False)
-	print CiscoResp.text
+	data = {
+	  "ip": ip,
+	  "proxy_id": os.environ.get('vrni_proxy_id'),
+	  "nickname": name,
+	  "enabled": "true",
+	  "notes": "",
+	  "credentials": {
+	    "username": os.environ.get('vrni_svc'),
+	    "password": os.environ.get('vrni_svc_pwd')
+	  },
+	 "switch_type": sw_type
+   }
+	CiscoResp = requests.post((BaseUrl+Uri),headers = headers, verify=False)
+	return CiscoResp.text
+
+
+def loadJson(token):
+	key = token
+	with open('device.json','r') as json_data:
+		json_data = json.load(json_data)
+		for ip,platform in json_data.items():
+			if str(platform[1]) == 'NEXUS_5K' or str(platform[1]) == 'NEXUS_7K' or str(platform[1]) == 'CATALYST_6500' or str(platform[1]) == 'CATALYST_3000':
+				result = addDataSource(key,ip,str(platform[0]),str(platform[1]))
+				print result
+			else:
+				pass
+
+				
+
+
 
 
 
@@ -56,6 +86,8 @@ def login(key):
 # 1.) GenrateToken() function will generate a session AuthToken which can be used to consume vRNI APIs
 AuthKey = GenrateToken()
 
-# 2.) login(AuthKey) is in test phase and is listing the cisco switchs
-login(AuthKey)
+# 2.) addDataSource(AuthKey) is in test phase and is listing the cisco switchs
+# addDataSource(AuthKey)
 
+# 3.)
+loadJson(AuthKey)
