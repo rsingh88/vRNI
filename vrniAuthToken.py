@@ -1,8 +1,8 @@
 #########################################################################################################################################
 ##                              Code purpose: Login to vRNI and update the data sources                                                ##
 ##                              Code Written By: Ravindra Singh                                                                        ##
-##                              Code State : Test                                                                                      ##
-##                              Last Prod Run : N/A                                                                                    ##
+##                              Code State : Prod                                                                                     ##
+##                              Last Prod Run : 03/March/2019                                                                              ##
 #########################################################################################################################################
 
 
@@ -40,45 +40,61 @@ def GenrateToken():
 
 
 def addDataSource(key,ip,name,sw_type):
+
 	AuthKey = key
 	BaseUrl = "https://vwcp9vcsvrni01.info.corp/api/ni"
-	Uri = "/data-sources/cisco-switches"
 	headers = {
 	"Content-Type":"application/json",
 	"Authorization": "NetworkInsight "+AuthKey
 	}
-	data = {
-	  "ip": ip,
-	  "proxy_id": os.environ.get('vrni_proxy_id'),
-	  "nickname": name,
-	  "enabled": "true",
-	  "notes": "",
-	  "credentials": {
-	    "username": os.environ.get('vrni_svc'),
-	    "password": os.environ.get('vrni_svc_pwd')
-	  },
-	 "switch_type": sw_type
-   }
-	CiscoResp = requests.post((BaseUrl+Uri),headers = headers, verify=False)
-	return CiscoResp.text
+
+	if sw_type == 'Palo Alto Networks':
+		device = {
+		  "ip": ip,
+		  "proxy_id": os.environ.get('vrni_proxy_id'),
+		  "nickname": name,
+		  "enabled": "true",
+		  "credentials": {
+		    "username": os.environ.get('vrni_svc'),
+		    "password": os.environ.get('vrni_svc_pwd')
+		  }
+	    }
+		Uri = "/data-sources/panorama-firewalls"
+		PaloResp = requests.post((BaseUrl+Uri),headers = headers, verify=False, data=json.dumps(device))
+		return PaloResp.text
+	else:
+		device = {
+		  "ip": ip,
+		  "proxy_id": os.environ.get('vrni_proxy_id'),
+		  "nickname": name,
+		  "enabled": "true",
+		  "credentials": {
+		    "username": os.environ.get('vrni_svc'),
+		    "password": os.environ.get('vrni_svc_pwd')
+		  },
+		 "switch_type": sw_type
+	    }
+		Uri = "/data-sources/cisco-switches"
+		CiscoResp = requests.post((BaseUrl+Uri),headers = headers, verify=False, data=json.dumps(device))
+		return CiscoResp.text
+
 
 
 def loadJson(token):
 	key = token
-	with open('device.json','r') as json_data:
-		json_data = json.load(json_data)
-		for ip,platform in json_data.items():
-			if str(platform[1]) == 'NEXUS_5K' or str(platform[1]) == 'NEXUS_7K' or str(platform[1]) == 'CATALYST_6500' or str(platform[1]) == 'CATALYST_3000':
-				result = addDataSource(key,ip,str(platform[0]),str(platform[1]))
-				print result
-			else:
-				pass
-
-				
-
-
-
-
+	c=0
+	json_data = open('device.json','r')
+	device_data = json.load(json_data)
+	for ip,platform in device_data.items():
+		if str(platform[1]) == "Palo Alto Networks":
+			result = addDataSource(key,ip,str(platform[0]),str(platform[1]))
+			print result
+			c+=1
+		else:
+			# print platform," nothing to do her"
+			pass
+	print"\n\nTotal run {}".format(c)
+	json_data.close()
 
 
 
@@ -86,8 +102,5 @@ def loadJson(token):
 # 1.) GenrateToken() function will generate a session AuthToken which can be used to consume vRNI APIs
 AuthKey = GenrateToken()
 
-# 2.) addDataSource(AuthKey) is in test phase and is listing the cisco switchs
-# addDataSource(AuthKey)
-
-# 3.)
+# 2.) loadJson(AuthKey) is in test phase and is listing the cisco switchs
 loadJson(AuthKey)
